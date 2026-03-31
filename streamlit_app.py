@@ -5,25 +5,12 @@ st.set_page_config(layout="wide")
 
 st.title("📊 Product Accuracy Dashboard")
 
-# -----------------------
-# Upload CSV
-# -----------------------
-uploaded_file = st.file_uploader(
-    "Upload CSV file",
-    type=["csv"]
-)
+import pandas as pd
+import streamlit as st
 
-if uploaded_file:
+sheet_id = "1jGmOw9KHLFuAX17577NeGAm7MGgimF8LK2ksdRh3fFY"
+url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 
-    df = pd.read_csv(uploaded_file)
-
-    # -----------------------
-    # Calculate change (Column D)
-    # -----------------------
-    df["change"] = df["week3"] - df["week2"]
-
-    st.subheader("Raw Data")
-    st.dataframe(df)
 
     # -----------------------
     # TOP 5 biggest changes
