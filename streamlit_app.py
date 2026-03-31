@@ -48,6 +48,18 @@ st.dataframe(df)
 st.subheader("Top 5 Products — Largest Increase")
 top5 = df.sort_values("change", ascending=False).head(5)
 st.dataframe(top5)
+
+# -----------------------
+# Average Metrics
+# -----------------------
+avg_week2 = df["week2"].mean()
+avg_week3 = df["week3"].mean()
+avg_diff = avg_week3 - avg_week2
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Avg Week 2", f"{avg_week2:.2f}%")
+col2.metric("Avg Week 3", f"{avg_week3:.2f}%")
+col3.metric("Difference", f"{avg_diff:.2f}%")
 # ---
 st.subheader("🔥 Top Movers")
 
@@ -66,20 +78,6 @@ for i, (_, row) in enumerate(top_df.iterrows()):
         value=f"{row['change']:+.2f}%",
         delta=f"{row['week3'] - row['week2']:+.2f}%"
     )
-
-
-# -----------------------
-# Average Metrics
-# -----------------------
-avg_week2 = df["week2"].mean()
-avg_week3 = df["week3"].mean()
-avg_diff = avg_week3 - avg_week2
-
-col1, col2, col3 = st.columns(3)
-col1.metric("Avg Week 2", f"{avg_week2:.2f}%")
-col2.metric("Avg Week 3", f"{avg_week3:.2f}%")
-col3.metric("Difference", f"{avg_diff:.2f}%")
-
 # -----------------------
 # Trend Classification
 # -----------------------
