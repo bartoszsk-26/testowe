@@ -1,66 +1,71 @@
-import altair as alt
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
-# Show the page title and description.
-st.set_page_config(page_title="Movies dataset", page_icon="🎬")
-st.title("🎬 Movies dataset")
-st.write(
-    """
-    This app visualizes data from [The Movie Database (TMDB)](https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata).
-    It shows which movie genre performed best at the box office over the years. Just 
-    click on the widgets below to explore!
-    """
+st.set_page_config(layout="wide")
+
+st.title("📊 Product Accuracy Dashboard")
+
+# -----------------------
+# Upload CSV
+# -----------------------
+uploaded_file = st.file_uploader(
+    "Upload CSV file",
+    type=["csv"]
 )
 
+if uploaded_file:
 
-# Load the data from a CSV. We're caching this so it doesn't reload every time the app
-# reruns (e.g. if the user interacts with the widgets).
-@st.cache_data
-def load_data():
-    df = pd.read_csv("data/movies_genres_summary.csv")
-    return df
+    df = pd.read_csv(uploaded_file)
 
+    # -----------------------
+    # Calculate change (Column D)
+    # -----------------------
+    df["change"] = df["week3"] - df["week2"]
 
-df = load_data()
+    st.subheader("Raw Data")
+    st.dataframe(df)
 
-# Show a multiselect widget with the genres using `st.multiselect`.
-genres = st.multiselect(
-    "Genres",
-    df.genre.unique(),
-    ["Action", "Adventure", "Biography", "Comedy", "Drama", "Horror"],
-)
+    # -----------------------
+    # TOP 5 biggest changes
+    # -----------------------
+    top5 = df.sort_values("change", ascending=False).head(5)
 
-# Show a slider widget with the years using `st.slider`.
-years = st.slider("Years", 1986, 2006, (2000, 2016))
+    st.subheader("🔥 Top 5 Products — Largest Increase")
+    st.dataframe(top5)
 
-# Filter the dataframe based on the widget input and reshape it.
-df_filtered = df[(df["genre"].isin(genres)) & (df["year"].between(years[0], years[1]))]
-df_reshaped = df_filtered.pivot_table(
-    index="year", columns="genre", values="gross", aggfunc="sum", fill_value=0
-)
-df_reshaped = df_reshaped.sort_values(by="year", ascending=False)
+    # -----------------------
+    # Average accuracy
+    # -----------------------
+    avg_week2 = df["week2"].mean()
+    avg_week3 = df["week3"].mean()
+    avg_diff = avg_week3 - avg_week2
 
+    col1, col2, col3 = st.columns(3)
 
-# Display the data as a table using `st.dataframe`.
-st.dataframe(
-    df_reshaped,
-    use_container_width=True,
-    column_config={"year": st.column_config.TextColumn("Year")},
-)
+    col1.metric("Avg Week 2", f"{avg_week2:.2f}%")
+    col2.metric("Avg Week 3", f"{avg_week3:.2f}%")
+    col3.metric("Difference", f"{avg_diff:.2f}%")
 
-# Display the data as an Altair chart using `st.altair_chart`.
-df_chart = pd.melt(
-    df_reshaped.reset_index(), id_vars="year", var_name="genre", value_name="gross"
-)
-chart = (
-    alt.Chart(df_chart)
-    .mark_line()
-    .encode(
-        x=alt.X("year:N", title="Year"),
-        y=alt.Y("gross:Q", title="Gross earnings ($)"),
-        color="genre:N",
-    )
-    .properties(height=320)
-)
-st.altair_chart(chart, use_container_width=True)
+    # -----------------------
+    # Trends classification
+    # -----------------------
+    up = (df["change"] > 0).sum()
+    down = (df["change"] < 0).sum()
+    no_change = (df["change"] == 0).sum()
+
+    trend_df = pd.DataFrame({
+        "Trend": ["Up", "Down", "No Change"],
+        "Count": [up, down, no_change]
+    })
+
+    st.subheader("📈 Trend Distribution")
+    st.bar_chart(trend_df.set_index("Trend"))
+
+    # -----------------------
+    # Change distribution chart
+    # -----------------------
+    st.subheader("Change per Product")
+    st.bar_chart(df.set_index("product")["change"])
+
+else:
+    st.info("Upload a CSV file to start.")
