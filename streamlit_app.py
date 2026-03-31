@@ -48,6 +48,25 @@ st.dataframe(df)
 st.subheader("Top 5 Products — Largest Increase")
 top5 = df.sort_values("change", ascending=False).head(5)
 st.dataframe(top5)
+# ---
+st.subheader("🔥 Top Movers")
+
+top_n = st.slider("Select Top N", 1, 20, 5)
+trend_type = st.radio("Trend Type", ["Increase", "Decrease"])
+
+if trend_type == "Increase":
+    top_df = df.sort_values("change", ascending=False).head(top_n)
+else:
+    top_df = df.sort_values("change", ascending=True).head(top_n)
+
+cols = st.columns(top_n)
+for i, (_, row) in enumerate(top_df.iterrows()):
+    cols[i].metric(
+        label=f"{row['product']}",
+        value=f"{row['change']:+.2f}%",
+        delta=f"{row['week3'] - row['week2']:+.2f}%"
+    )
+
 
 # -----------------------
 # Average Metrics
@@ -76,21 +95,4 @@ trend_df = pd.DataFrame({
 st.subheader("📈 Trend Distribution")
 st.bar_chart(trend_df.set_index("Trend"))
 
-st.subheader("🔥 Top Movers")
-
-top_n = st.slider("Select Top N", 1, 20, 5)
-trend_type = st.radio("Trend Type", ["Increase", "Decrease"])
-
-if trend_type == "Increase":
-    top_df = df.sort_values("change", ascending=False).head(top_n)
-else:
-    top_df = df.sort_values("change", ascending=True).head(top_n)
-
-cols = st.columns(top_n)
-for i, (_, row) in enumerate(top_df.iterrows()):
-    cols[i].metric(
-        label=f"{row['product']}",
-        value=f"{row['change']:+.2f}%",
-        delta=f"{row['week3'] - row['week2']:+.2f}%"
-    )
 
