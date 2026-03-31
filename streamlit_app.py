@@ -39,13 +39,13 @@ df = load_data()
 # -----------------------
 # Raw Data Table
 # -----------------------
-st.subheader("📄 Raw Data")
+st.subheader("Model results")
 st.dataframe(df)
 
 # -----------------------
 # Top 5 Products — Largest Change
 # -----------------------
-st.subheader("🔥 Top 5 Products — Largest Increase")
+st.subheader("Top 5 Products — Largest Increase")
 top5 = df.sort_values("change", ascending=False).head(5)
 st.dataframe(top5)
 
@@ -76,8 +76,3 @@ trend_df = pd.DataFrame({
 st.subheader("📈 Trend Distribution")
 st.bar_chart(trend_df.set_index("Trend"))
 
-# -----------------------
-# Change per Product Chart
-# -----------------------
-st.subheader("📊 Change per Product")
-st.bar_chart(df.set_index("product")["change"])
