@@ -1,64 +1,83 @@
+# app.py
 import streamlit as st
 import pandas as pd
 
+st.set_page_config(layout="wide", page_title="Product Accuracy Dashboard")
 st.title("📊 Product Accuracy Dashboard")
 
 # -----------------------
-# Upload CSV
+# Google Sheet setup
 # -----------------------
-uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
+sheet_id = "1jGmOw9KHLFuAX17577NeGAm7MGgimF8LK2ksdRh3fFY"
+url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
 
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
-
-    # clean columns
-    df.columns = (
-        df.columns
-        .str.strip()
-        .str.lower()
-        .str.replace(" ", "")
-    )
+@st.cache_data(ttl=300)  # cache for 5 minutes
+def load_data():
+    df = pd.read_csv(url)
+    
+    # Clean column names: lowercase, remove spaces
+    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
+    
+    # Rename 'products' to 'product'
     df = df.rename(columns={"products": "product"})
-
-    # calculate change
+    
+    # Validate required columns
+    required = {"product", "week2", "week3"}
+    missing = required - set(df.columns)
+    if missing:
+        st.error(f"Missing required columns: {missing}")
+        st.stop()
+    
+    # Calculate change
     df["change"] = df["week3"] - df["week2"]
+    
+    return df
 
-    # -----------------------
-    # Top 5 biggest changes
-    # -----------------------
-    top5 = df.sort_values("change", ascending=False).head(5)
-    st.subheader("🔥 Top 5 Products — Largest Increase")
-    st.dataframe(top5)
+# Load data
+df = load_data()
 
-    # -----------------------
-    # Average accuracy
-    # -----------------------
-    avg_week2 = df["week2"].mean()
-    avg_week3 = df["week3"].mean()
-    avg_diff = avg_week3 - avg_week2
+# -----------------------
+# Raw Data Table
+# -----------------------
+st.subheader("📄 Raw Data")
+st.dataframe(df)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Avg Week 2", f"{avg_week2:.2f}%")
-    col2.metric("Avg Week 3", f"{avg_week3:.2f}%")
-    col3.metric("Difference", f"{avg_diff:.2f}%")
+# -----------------------
+# Top 5 Products — Largest Change
+# -----------------------
+st.subheader("🔥 Top 5 Products — Largest Increase")
+top5 = df.sort_values("change", ascending=False).head(5)
+st.dataframe(top5)
 
-    # -----------------------
-    # Trends classification
-    # -----------------------
-    up = (df["change"] > 0).sum()
-    down = (df["change"] < 0).sum()
-    no_change = (df["change"] == 0).sum()
+# -----------------------
+# Average Metrics
+# -----------------------
+avg_week2 = df["week2"].mean()
+avg_week3 = df["week3"].mean()
+avg_diff = avg_week3 - avg_week2
 
-    trend_df = pd.DataFrame({
-        "Trend": ["Up", "Down", "No Change"],
-        "Count": [up, down, no_change]
-    })
+col1, col2, col3 = st.columns(3)
+col1.metric("Avg Week 2", f"{avg_week2:.2f}%")
+col2.metric("Avg Week 3", f"{avg_week3:.2f}%")
+col3.metric("Difference", f"{avg_diff:.2f}%")
 
-    st.subheader("📈 Trend Distribution")
-    st.bar_chart(trend_df.set_index("Trend"))
+# -----------------------
+# Trend Classification
+# -----------------------
+up = (df["change"] > 0).sum()
+down = (df["change"] < 0).sum()
+no_change = (df["change"] == 0).sum()
 
-    st.subheader("Change per Product")
-    st.bar_chart(df.set_index("product")["change"])
+trend_df = pd.DataFrame({
+    "Trend": ["Up", "Down", "No Change"],
+    "Count": [up, down, no_change]
+})
 
-else:
-    st.info("Upload a CSV file to start.")
+st.subheader("📈 Trend Distribution")
+st.bar_chart(trend_df.set_index("Trend"))
+
+# -----------------------
+# Change per Product Chart
+# -----------------------
+st.subheader("📊 Change per Product")
+st.bar_chart(df.set_index("product")["change"])
