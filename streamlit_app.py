@@ -99,13 +99,24 @@ tab1, tab2 = st.tabs(["Top Movers (Sheet1)", "Monthly Accuracy (Sheet2)"])
 with tab1:
     st.subheader("Filters")
 
-options = st.multiselect(
-    "What are your favorite colors?",
-    ["Green", "Yellow", "Red", "Blue"],
-    default=["Yellow", "Red"],
-)
+    # Get unique regions from column D (region)
+    regions1 = sorted(df1["region"].dropna().unique())
 
-st.write("You selected:", options)
+    # Multi-select filter
+    selected_regions1 = st.multiselect(
+        "Choose products region?",
+        options=regions1,
+        default=regions1[:2]  # first two regions as default
+    )
+
+    # Apply filter
+    if selected_regions1:
+        filtered_df1 = df1[df1["region"].isin(selected_regions1)]
+    else:
+        # If nothing selected, show all
+        filtered_df1 = df1.copy()
+
+    st.write(f"You selected: {', '.join(selected_regions1) if selected_regions1 else 'All regions'}")
 
     # ---------------- KPI TOP MOVERS ----------------
     st.subheader("🔥 Top Movers KPI Cards")
