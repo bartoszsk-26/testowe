@@ -30,10 +30,6 @@ st.title("📊 Product Accuracy Dashboard")
 # -----------------------
 # Google Sheet URLs
 # -----------------------
-sheet_id = "1jGmOw9KHLFuAX17577NeGAm7MGgimF8LK2ksdRh3fFY"
-
-url1 = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=0"
-url2 = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid=157430345"
 
 
 # -----------------------
