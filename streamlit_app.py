@@ -18,23 +18,35 @@ url2 = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid
 # -----------------------
 # Load data
 # -----------------------
-@st.cache_data(ttl=60)  # auto-refresh every 60s
+@st.cache_data(ttl=60)
 def load_sheet1():
     df = pd.read_csv(url1)
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
-    df = df.rename(columns={"products": "product"})
+
+    # clean headers safely
+    df.columns = (
+        df.columns
+        .str.strip()
+        .str.lower()
+        .str.replace(" ", "", regex=False)
+        .str.replace("\ufeff", "", regex=False)
+    )
+
+    # rename columns
+    df = df.rename(columns={
+        "products": "product",
+        "week2": "week2",
+        "week3": "week3",
+        "region": "region"
+    })
+
+    # numeric safety
+    df["week2"] = pd.to_numeric(df["week2"], errors="coerce")
+    df["week3"] = pd.to_numeric(df["week3"], errors="coerce")
+
+    # calculate change
     df["change"] = df["week3"] - df["week2"]
-    return df
 
-@st.cache_data(ttl=60)
-def load_sheet2():
-    df = pd.read_csv(url2)
-    df.columns = df.columns.str.strip().str.lower().str.replace(" ", "")
-    df = df.rename(columns={"id(products)": "productid"})
     return df
-
-df1 = load_sheet1()
-df2 = load_sheet2()
 
 # -----------------------
 # Tabs for each sheet
@@ -45,14 +57,34 @@ tab1, tab2 = st.tabs(["Top Movers (Sheet1)", "Monthly Accuracy (Sheet2)"])
 # TAB 1: Top Movers
 # -----------------------
 with tab1:
+    # -----------------------
+# REGION FILTER (Sheet1)
+# -----------------------
+st.subheader("Filters")
+
+regions1 = sorted(filtered_df1["region"].dropna().unique())
+
+selected_region1 = st.selectbox(
+    "Choose Region",
+    ["All"] + list(regions1),
+    key="region_tab1"
+)
+
+# Apply filter
+if selected_region1 == "All":
+    filtered_filtered_df1 = filtered_df1.copy()
+else:
+    filtered_filtered_df1 = filtered_df1[filtered_df1["region"] == selected_region1]
+
+st.write("You selected:", selected_region1)
     st.subheader("🔥 Top Movers KPI Cards")
     top_n = st.slider("Select Top N", 1, 20, 5)
     trend_type = st.radio("Trend Type", ["Increase", "Decrease"])
 
     if trend_type == "Increase":
-        top_df = df1.sort_values("change", ascending=False).head(top_n)
+        top_df = filtered_df1.sort_values("change", ascending=False).head(top_n)
     else:
-        top_df = df1.sort_values("change", ascending=True).head(top_n)
+        top_df = filtered_df1.sort_values("change", ascending=True).head(top_n)
 
     cols = st.columns(top_n)
     for i, (_, row) in enumerate(top_df.iterrows()):
@@ -63,11 +95,11 @@ with tab1:
         )
 
     st.subheader("Change per Product")
-    st.bar_chart(df1.set_index("product")["change"])
+    st.bar_chart(filtered_df1.set_index("product")["change"])
 
     # Average metrics
-    avg_week2 = df1["week2"].mean()
-    avg_week3 = df1["week3"].mean()
+    avg_week2 = filtered_df1["week2"].mean()
+    avg_week3 = filtered_df1["week3"].mean()
     avg_diff = avg_week3 - avg_week2
 
     col1, col2, col3 = st.columns(3)
@@ -76,9 +108,9 @@ with tab1:
     col3.metric("Difference", f"{avg_diff:.2f}%")
 
     # Trend classification
-    up = (df1["change"] > 0).sum()
-    down = (df1["change"] < 0).sum()
-    no_change = (df1["change"] == 0).sum()
+    up = (filtered_df1["change"] > 0).sum()
+    down = (filtered_df1["change"] < 0).sum()
+    no_change = (filtered_df1["change"] == 0).sum()
 
     trend_df = pd.DataFrame({
         "Trend": ["Up", "Down", "No Change"],
