@@ -1,6 +1,28 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+from pyngrok import ngrok
+import threading
+import subprocess
+import time
+import sys
+import os
+
+# -----------------------
+# NGROK SETUP
+# -----------------------
+NGROK_AUTH = "username:password"  # <-- change this
+STREAMLIT_PORT = 8501
+
+def start_ngrok():
+    public_url = ngrok.connect(STREAMLIT_PORT, "http", auth=NGROK_AUTH)
+    print(f"🔗 Streamlit is publicly available at: {public_url}")
+    print("Use username/password to login via ngrok.")
+
+# Only start ngrok if running locally
+if "get_ipython" not in globals():  # not in Jupyter
+    threading.Thread(target=start_ngrok, daemon=True).start()
+    time.sleep(1)  # wait a bit so ngrok tunnel is established
 
 st.set_page_config(layout="wide", page_title="Product Dashboard")
 st.title("📊 Product Accuracy Dashboard")
