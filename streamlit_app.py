@@ -97,23 +97,18 @@ tab1, tab2 = st.tabs(["Top Movers (Sheet1)", "Monthly Accuracy (Sheet2)"])
 # TAB 1 — TOP MOVERS
 # =====================================================
 with tab1:
-
     st.subheader("Filters")
 
-    regions1 = sorted(df1["region"].dropna().unique())
+    # FIXED REGION
+    fixed_region = "US-AB"  # <-- replace with your desired region
 
-    selected_region1 = st.selectbox(
-        "Choose Region",
-        ["All"] + list(regions1),
-        key="region_tab1"
-    )
-
-    if selected_region1 == "All":
-        filtered_df1 = df1.copy()
+    # Button to apply filter
+    if st.button(f"Show only region {fixed_region}"):
+        filtered_df1 = df1[df1["region"] == fixed_region]
+        st.write(f"You selected: {fixed_region}")
     else:
-        filtered_df1 = df1[df1["region"] == selected_region1]
-
-    st.write("You selected:", selected_region1)
+        filtered_df1 = df1.copy()
+        st.write("Showing all regions")
 
     # ---------------- KPI TOP MOVERS ----------------
     st.subheader("🔥 Top Movers KPI Cards")
