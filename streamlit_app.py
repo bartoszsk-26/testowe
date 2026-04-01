@@ -99,16 +99,13 @@ tab1, tab2 = st.tabs(["Top Movers (Sheet1)", "Monthly Accuracy (Sheet2)"])
 with tab1:
     st.subheader("Filters")
 
-    # FIXED REGION
-    fixed_region = "US-AB"  # <-- replace with your desired region
+options = st.multiselect(
+    "What are your favorite colors?",
+    ["Green", "Yellow", "Red", "Blue"],
+    default=["Yellow", "Red"],
+)
 
-    # Button to apply filter
-    if st.button(f"Show only region {fixed_region}"):
-        filtered_df1 = df1[df1["region"] == fixed_region]
-        st.write(f"You selected: {fixed_region}")
-    else:
-        filtered_df1 = df1.copy()
-        st.write("Showing all regions")
+st.write("You selected:", options)
 
     # ---------------- KPI TOP MOVERS ----------------
     st.subheader("🔥 Top Movers KPI Cards")
